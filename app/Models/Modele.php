@@ -1,93 +1,42 @@
 <?php
-//acces au Modele parent pour l heritage
+
 namespace App\Models;
+
 use CodeIgniter\Model;
+use Monolog\Logger;
+use Monolog\Handler\StreamHandler;
+use Monolog\Processor\PsrLogMessageProcessor;
 
-//=========================================================================================
-//définition d'une classe Modele (meme nom que votre fichier Modele.php) 
-//héritée de Modele et permettant d'utiliser les raccoucis et fonctions de CodeIgniter
-//  Attention vos Fichiers et Classes Controleur et Modele doit commencer par une Majuscule 
-//  et suivre par des minuscules
-//=========================================================================================
-class Modele extends Model {
+class Modele extends Model
+{
+    public function getVisiteur($login, $mdp)
+    {
+        try {
+            $db = db_connect();
+        } catch (\Throwable $e) {
+            $logger = new Logger('test_log');
+            $logger->pushHandler(new StreamHandler('/tmp/monfichier.log', Logger::DEBUG));
+            $logger->pushProcessor(new PsrLogMessageProcessor());
+            $logger->emergency('Connexion impossible à la base de données : {message}', ['message' => $e->getMessage()]);
 
-//==========================
-// Code du modele
-//==========================
+            throw $e;
+        }
 
-//=========================================================================
-// Fonction 1
-// récupère les données BDD dans une fonction getVisiteur
-//=========================================================================
-public function getVisiteur($login,$mdp) { 
-// Recherche un visiteur à partir de son identifiant et de son mot de passe.
+        $sql = 'SELECT id, nom, prenom FROM visiteur WHERE login = ? AND mdp = ?';
+        $resultat = $db->query($sql, [$login, $mdp]);
 
-//==========================================================================================
-// Connexion à la BDD en utilisant les données féninies dans le fichier app/Config/Database.php
-//==========================================================================================
-    $db = db_connect();
-    #$db->table(visiteur);
-    #$table = 'visiteur';
+        return $resultat->getResult();
+    }
 
-//=============================
-// rédaction de la requete sql
-//=============================
-    $sql = 'SELECT id, nom, prenom FROM visiteur WHERE login = ? AND mdp = ?';
-	#$db->table('visiteur')
-     #   ->where ('login',$login)
-     #   ->where ('mdp',$mdp)
-      #  ->get()
-       # ->getResultArray();
-
-
-//=============================
-// execution de la requete sql
-//=============================	
-    $resultat = $db->query($sql,[$login,$mdp]);
-
-//=============================
-// récupération des données de la requete sql
-//=============================
-	$resultat = $resultat->getResult();
-
-//=============================
-// renvoi du résultat au Controleur
-//=============================	
-    return $resultat;
-   
-}
-
-
-//=========================================================================
-// Fonction 2 
-// récupère les données BDD dans une fonction getFrais
-//=========================================================================
 public function getFrais($idVisiteur,$mois) {
-    // Vérifie si une fiche existe pour ce visiteur et ce mois.
-	
-//==========================================================================================
-// Connexion à la BDD en utilisant les données féninies dans le fichier app/Config/Database.php
-//==========================================================================================
     $db = db_connect();	
 	
-//=====================================
-// rédaction de la requete sql préparée
-//=====================================
 	$sql = 'SELECT * FROM FicheFrais WHERE idVisiteur = ? AND mois = ?';
 	
-//=====================================================
-// execution de la requete sql en passant un parametre id
-//=====================================================	
     $resultat = $db->query($sql, [$idVisiteur,$mois]);
 	
-//=============================
-// récupération des données de la requete sql
-//=============================
 	$resultat = $resultat->getResult();
 
-//=============================
-// renvoi du résultat au Controleur
-//=============================		
     return $resultat;
   
 }
